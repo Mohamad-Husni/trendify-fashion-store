@@ -90,46 +90,39 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
-  List<Order> _orders = [];
-  bool _isLoading = true;
   String _selectedFilter = 'all';
+
+  // Real-time orders stream
+  Stream<QuerySnapshot>? _ordersStream;
 
   @override
   void initState() {
     super.initState();
-    _loadOrders();
+    _setupOrdersStream();
   }
 
-  Future<void> _loadOrders() async {
+  void _setupOrdersStream() {
     final user = _auth.currentUser;
-    if (user == null) {
-      setState(() => _isLoading = false);
-      return;
+    if (user == null) return;
+
+    Query<Map<String, dynamic>> query = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('orders')
+        .orderBy('createdAt', descending: true);
+
+    if (_selectedFilter != 'all') {
+      query = query.where('status', isEqualTo: _selectedFilter);
     }
 
-    try {
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('orders')
-          .orderBy('createdAt', descending: true);
+    setState(() {
+      _ordersStream = query.snapshots();
+    });
+  }
 
-      if (_selectedFilter != 'all') {
-        query = query.where('status', isEqualTo: _selectedFilter);
-      }
-
-      final snapshot = await query.get();
-      
-      setState(() {
-        _orders = snapshot.docs
-            .map((doc) => Order.fromJson(doc.id, doc.data()))
-            .toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading orders: $e');
-      setState(() => _isLoading = false);
-    }
+  Future<void> _refreshOrders() async {
+    _setupOrdersStream();
+    return Future.value();
   }
 
   @override
@@ -210,24 +203,57 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
           ),
           
-          // Orders List
+          // Orders List with Real-time Stream
           Expanded(
-            child: _isLoading
+            child: _ordersStream == null
                 ? const Center(
                     child: CircularProgressIndicator(color: AppTheme.gold),
                   )
-                : _orders.isEmpty
-                    ? _buildEmptyState()
-                    : RefreshIndicator(
-                        onRefresh: _loadOrders,
+                : StreamBuilder<QuerySnapshot>(
+                    stream: _ordersStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: AppTheme.gold),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error loading orders',
+                                style: const TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final orders = snapshot.data?.docs
+                          .map((doc) => Order.fromJson(doc.id, doc.data() as Map<String, dynamic>))
+                          .toList() ?? [];
+
+                      if (orders.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      return RefreshIndicator(
+                        onRefresh: _refreshOrders,
                         color: AppTheme.gold,
                         backgroundColor: const Color(0xFF1E1E1E),
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _orders.length,
-                          itemBuilder: (context, index) => _buildOrderCard(_orders[index]),
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) => _buildOrderCard(orders[index]),
                         ),
-                      ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -244,9 +270,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         onSelected: (selected) {
           setState(() {
             _selectedFilter = value;
-            _isLoading = true;
           });
-          _loadOrders();
+          _setupOrdersStream();
         },
         backgroundColor: const Color(0xFF2A2A2A),
         selectedColor: AppTheme.gold,
@@ -647,7 +672,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             .update({'status': 'cancelled'});
 
         Navigator.pop(context);
-        _loadOrders();
+        _refreshOrders();
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

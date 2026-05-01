@@ -150,7 +150,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        // Navigate to orders screen to show the new order
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OrdersScreen()),
+        );
       }
     } catch (e) {
       if (mounted) {

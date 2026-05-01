@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fashion_store/theme/app_theme.dart';
 import 'package:fashion_store/services/payment_service.dart';
 import 'package:fashion_store/widgets/custom_button.dart';
@@ -13,57 +15,97 @@ class PaymentMethodsScreen extends StatefulWidget {
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   final PaymentService _paymentService = PaymentService();
-  bool _isLoading = true;
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
+  // Real-time payment methods stream
+  Stream<QuerySnapshot>? _paymentMethodsStream;
 
   @override
   void initState() {
     super.initState();
-    _loadPaymentMethods();
+    _setupPaymentMethodsStream();
   }
 
-  Future<void> _loadPaymentMethods() async {
-    await _paymentService.loadPaymentMethods();
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  void _setupPaymentMethodsStream() {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _paymentMethodsStream = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('paymentMethods')
+          .orderBy('createdAt', descending: true)
+          .snapshots();
+    });
+  }
+
+  Future<void> _refreshPaymentMethods() async {
+    _setupPaymentMethodsStream();
+    return Future.value();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _paymentService,
-      builder: (context, child) {
-        final paymentMethods = _paymentService.paymentMethods;
-        
-        return Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppTheme.deepBlack),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: const Text(
-              'PAYMENT METHODS',
-              style: TextStyle(
-                color: AppTheme.deepBlack,
-                fontSize: 14,
-                letterSpacing: 2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            centerTitle: true,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppTheme.deepBlack),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'PAYMENT METHODS',
+          style: TextStyle(
+            color: AppTheme.deepBlack,
+            fontSize: 14,
+            letterSpacing: 2,
+            fontWeight: FontWeight.w600,
           ),
-          body: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
-                  ),
-                )
-              : SingleChildScrollView(
+        ),
+        centerTitle: true,
+      ),
+      body: _paymentMethodsStream == null
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
+              ),
+            )
+          : StreamBuilder<QuerySnapshot>(
+              stream: _paymentMethodsStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.gold),
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Error loading payment methods',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final paymentMethods = snapshot.data?.docs
+                    .map((doc) => PaymentMethod.fromJson(doc.data() as Map<String, dynamic>))
+                    .toList() ?? [];
+
+                return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,9 +151,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       _buildAddMethodButtons(),
                     ],
                   ),
-                ),
-        );
-      },
+                );
+              },
+            ),
     );
   }
 
