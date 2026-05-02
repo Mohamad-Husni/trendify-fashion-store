@@ -5,11 +5,10 @@ import 'package:flutter/foundation.dart';
 
 class PaymentMethod {
   final String id;
-  final String type; // card, upi, cod
+  final String type; // card, cod
   final String? cardNumber;
   final String? cardHolderName;
   final String? expiryDate;
-  final String? upiId;
   final bool isDefault;
   final DateTime createdAt;
 
@@ -19,7 +18,6 @@ class PaymentMethod {
     this.cardNumber,
     this.cardHolderName,
     this.expiryDate,
-    this.upiId,
     this.isDefault = false,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -29,8 +27,6 @@ class PaymentMethod {
       case 'card':
         if (cardNumber == null || cardNumber!.length < 4) return 'Card';
         return '•••• •••• •••• ${cardNumber!.substring(cardNumber!.length - 4)}';
-      case 'upi':
-        return upiId ?? 'UPI';
       case 'cod':
         return 'Cash on Delivery';
       default:
@@ -42,8 +38,6 @@ class PaymentMethod {
     switch (type) {
       case 'card':
         return Icons.credit_card;
-      case 'upi':
-        return Icons.account_balance;
       case 'cod':
         return Icons.payments;
       default:
@@ -58,7 +52,6 @@ class PaymentMethod {
       'cardNumber': cardNumber,
       'cardHolderName': cardHolderName,
       'expiryDate': expiryDate,
-      'upiId': upiId,
       'isDefault': isDefault,
       'createdAt': Timestamp.fromDate(createdAt),
     };
@@ -71,7 +64,6 @@ class PaymentMethod {
       cardNumber: json['cardNumber'],
       cardHolderName: json['cardHolderName'],
       expiryDate: json['expiryDate'],
-      upiId: json['upiId'],
       isDefault: json['isDefault'] ?? false,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -83,7 +75,6 @@ class PaymentMethod {
     String? cardNumber,
     String? cardHolderName,
     String? expiryDate,
-    String? upiId,
     bool? isDefault,
     DateTime? createdAt,
   }) {
@@ -93,7 +84,6 @@ class PaymentMethod {
       cardNumber: cardNumber ?? this.cardNumber,
       cardHolderName: cardHolderName ?? this.cardHolderName,
       expiryDate: expiryDate ?? this.expiryDate,
-      upiId: upiId ?? this.upiId,
       isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt ?? this.createdAt,
     );

@@ -8,10 +8,18 @@ import 'package:fashion_store/screens/product_listing_screen.dart';
 import 'package:fashion_store/screens/search_screen.dart';
 import 'package:fashion_store/screens/wishlist_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final _firestore = FirebaseFirestore.instance;
+  final ScrollController _scrollController = ScrollController();
+  bool _isLoadingMore = false;
+  int _currentLimit = 6; // Start with fewer items for faster loading
 
   Future<void> _seedProducts(BuildContext context) async {
     try {
@@ -276,7 +284,11 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('products').snapshots(),
+              stream: _firestore
+                  .collection('products')
+                  .orderBy('createdAt', descending: true)
+                  .limit(_currentLimit)
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(

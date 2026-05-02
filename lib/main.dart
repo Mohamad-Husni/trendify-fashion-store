@@ -8,10 +8,10 @@ import 'package:fashion_store/screens/login_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Enable performance optimizations
+  // Aggressive performance optimizations
   // Reduce image cache size for better memory management
-  PaintingBinding.instance.imageCache.maximumSize = 50;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20; // 50MB
+  PaintingBinding.instance.imageCache.maximumSize = 30;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 30 << 20; // 30MB
   
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,

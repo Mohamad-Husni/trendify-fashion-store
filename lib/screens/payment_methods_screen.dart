@@ -258,12 +258,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         ),
         const SizedBox(height: 12),
         _buildAddButton(
-          'UPI',
-          Icons.account_balance,
-          () => _showAddUPIDialog(),
-        ),
-        const SizedBox(height: 12),
-        _buildAddButton(
           'Cash on Delivery',
           Icons.payments,
           () => _addCOD(),
@@ -411,62 +405,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
-  void _showAddUPIDialog() {
-    final upiController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add UPI'),
-        content: CustomTextField(
-          label: 'UPI ID (e.g., name@upi)',
-          controller: upiController,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final upiId = upiController.text.trim();
-              
-              if (upiId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter UPI ID'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-              
-              Navigator.pop(context);
-              
-              final method = PaymentMethod(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                type: 'upi',
-                upiId: upiId,
-              );
-              
-              final success = await _paymentService.addPaymentMethod(method);
-              
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(success ? 'UPI added successfully!' : 'Failed to add UPI'),
-                    backgroundColor: success ? Colors.green : Colors.red,
-                  ),
-                );
-              }
-            },
-            child: const Text('ADD'),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   void _addCOD() async {
     final method = PaymentMethod(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
