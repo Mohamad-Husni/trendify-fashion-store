@@ -21,71 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingMore = false;
   int _currentLimit = 6; // Start with fewer items for faster loading
 
-  Future<void> _seedProducts(BuildContext context) async {
-    try {
-      final products = [
-        {
-          'id': '1',
-          'title': 'Structured Linen Blazer',
-          'collection': 'Office Wear',
-          'description': 'Elegant cream blazer perfect for formal occasions.',
-          'price': 24500.00,
-          'imageUrl': 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600',
-          'rating': 4.8,
-          'sizes': ['XS', 'S', 'M', 'L', 'XL'],
-          'colors': ['Cream', 'Navy', 'Black'],
-          'createdAt': Timestamp.now(),
-        },
-        {
-          'id': '2',
-          'title': 'Essential Gold Hoops',
-          'collection': 'Accessories',
-          'description': '14k gold plated hoops for everyday elegance.',
-          'price': 12000.00,
-          'imageUrl': 'https://images.unsplash.com/photo-1635767798638-3e2523c0188c?w=600',
-          'rating': 4.9,
-          'sizes': ['One Size'],
-          'colors': ['Gold', 'Silver'],
-          'createdAt': Timestamp.now(),
-        },
-        {
-          'id': '3',
-          'title': 'Minimalist Silk Dress',
-          'collection': 'Evening Wear',
-          'description': 'Flowing silk dress perfect for summer evenings.',
-          'price': 18500.00,
-          'imageUrl': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600',
-          'rating': 4.7,
-          'sizes': ['XS', 'S', 'M', 'L'],
-          'colors': ['Champagne', 'Black'],
-          'createdAt': Timestamp.now(),
-        },
-      ];
-
-      for (final product in products) {
-        await _firestore.collection('products').doc(product['id'] as String).set(product);
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Sample products added successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
 
@@ -216,36 +152,50 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            // Horizontal categories
+            // Dynamic categories from Firestore
             SizedBox(
               height: 40,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                scrollDirection: Axis.horizontal,
-                itemCount: 4,
-                separatorBuilder: (context, index) => const SizedBox(width: 24),
-                itemBuilder: (context, index) {
-                  final categories = [
-                    'BATIK WEAR',
-                    'OFFICE WEAR',
-                    'TRADITIONAL',
-                    'CASUAL',
-                  ];
-                  return Center(
-                    child: Text(
-                      categories[index],
-                      style: TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 1.5,
-                        fontWeight: index == 0
-                            ? FontWeight.w700
-                            : FontWeight.w400,
-                        color: index == 0 ? AppTheme.deepBlack : AppTheme.grey,
-                        decoration: index == 0
-                            ? TextDecoration.underline
-                            : null,
-                      ),
-                    ),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore
+                    .collection('categories')
+                    .orderBy('name')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: SizedBox.shrink());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: SizedBox.shrink());
+                  }
+
+                  final categories = snapshot.data!.docs.map((doc) {
+                    return doc.data() as Map<String, dynamic>;
+                  }).toList();
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    separatorBuilder: (context, index) => const SizedBox(width: 24),
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return Center(
+                        child: Text(
+                          category['name']?.toString().toUpperCase() ?? '',
+                          style: TextStyle(
+                            fontSize: 12,
+                            letterSpacing: 1.5,
+                            fontWeight: index == 0
+                                ? FontWeight.w700
+                                : FontWeight.w400,
+                            color: index == 0 ? AppTheme.deepBlack : AppTheme.grey,
+                            decoration: index == 0
+                                ? TextDecoration.underline
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -286,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
             StreamBuilder<QuerySnapshot>(
               stream: _firestore
                   .collection('products')
+                  .where('isActive', isEqualTo: true)
                   .orderBy('createdAt', descending: true)
                   .limit(_currentLimit)
                   .snapshots(),

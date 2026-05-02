@@ -25,10 +25,11 @@ class ProductService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Stream of all products for real-time updates
+  // Stream of all products for real-time updates (optimized)
   Stream<List<Product>> get productsStream {
     return _firestore
         .collection('products')
+        .where('isActive', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
@@ -38,11 +39,13 @@ class ProductService extends ChangeNotifier {
     });
   }
 
-  // Stream of products by category (no orderBy to avoid index requirement)
+  // Stream of products by category (optimized)
   Stream<List<Product>> getProductsByCategoryStream(String category) {
     return _firestore
         .collection('products')
+        .where('isActive', isEqualTo: true)
         .where('collection', isEqualTo: category)
+        .orderBy('rating', descending: true)
         .snapshots()
         .map((snapshot) {
       final products = snapshot.docs

@@ -11,7 +11,6 @@ import 'package:fashion_store/screens/search_screen.dart';
 import 'package:fashion_store/screens/notifications_screen.dart';
 import 'package:fashion_store/screens/payment_methods_screen.dart';
 import 'package:fashion_store/screens/settings_screen.dart';
-import 'package:fashion_store/utils/firebase_seeder.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({super.key});
@@ -223,19 +222,6 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _buildProfileMenuItem(
-                    Icons.cloud_upload,
-                    'SEED PRODUCTS',
-                    subtitle: 'Add sample products to database',
-                    onTap: () => FirebaseSeeder.showSeederDialog(context),
-                  ),
-                  const Divider(color: AppTheme.lightGrey, height: 1, thickness: 1),
-                  _buildProfileMenuItem(
-                    Icons.storage,
-                    'CHECK DATABASE STATUS',
-                    subtitle: 'View product count',
-                    onTap: () => FirebaseSeeder.showDataStatus(context),
-                  ),
                 ],
               ),
             ),

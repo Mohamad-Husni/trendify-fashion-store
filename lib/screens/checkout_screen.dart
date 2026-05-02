@@ -431,18 +431,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
                     ),
                     const SizedBox(height: 24),
-                    // Summary dummy items
-                    _buildSummaryItem(
-                      'Structured Linen Blazer',
-                      'Cream • Size M',
-                      'Rs. 24,500.00',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSummaryItem(
-                      'Essential Gold Hoops',
-                      '14k Gold • OS',
-                      'Rs. 12,000.00',
-                    ),
+                    // Dynamic cart items
+                    ..._cartItems.map((item) => _buildSummaryItem(
+                      item.title,
+                      '${item.color ?? 'Default'} • Size ${item.size ?? 'M'}',
+                      'Rs. ${item.price.toStringAsFixed(2)}',
+                    )).toList(),
+                    if (_cartItems.isNotEmpty) const SizedBox(height: 16),
                     const SizedBox(height: 24),
                     const Divider(
                       color: AppTheme.lightGrey,
@@ -450,7 +445,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       thickness: 1,
                     ),
                     const SizedBox(height: 24),
-                    _buildPriceRow('Subtotal', 'Rs. 36,500.00'),
+                    _buildPriceRow('Subtotal', 'Rs. ${_subtotal.toStringAsFixed(2)}'),
                     const SizedBox(height: 12),
                     _buildPriceRow('Shipping', 'Complimentary'),
                     const SizedBox(height: 12),
