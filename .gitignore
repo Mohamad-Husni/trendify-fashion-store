@@ -70,6 +70,21 @@ $RECYCLE.BIN/
 *.ai
 *.sketch
 
+# Executable files and downloads
+*.apk
+*.exe
+*.dmg
+*.ipa
+*.zip
+*.tar.gz
+*.rar
+
+# Download files (too large for Git)
+assets/downloads/*.apk
+assets/downloads/*.exe
+assets/downloads/*.dmg
+assets/downloads/*.ipa
+
 # Node modules (if any)
 node_modules/
 
