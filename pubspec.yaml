@@ -48,6 +48,14 @@ dependencies:
   
   # Local storage
   shared_preferences: ^2.2.0
+  
+  # Performance optimization
+  cached_network_image: ^3.4.1
+  flutter_staggered_animations: ^1.1.1
+  
+  # Multi-platform support
+  url_launcher: ^6.3.0
+  path_provider: ^2.1.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -72,6 +80,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Performance optimizations
+  # Tree shake assets to reduce app size
+  # Enable deferred loading for better startup performance
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -106,3 +118,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/downloads/
