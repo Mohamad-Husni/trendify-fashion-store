@@ -51,24 +51,37 @@ class AuthService extends ChangeNotifier {
   bool get isLoggedIn => _currentUser != null;
   String? get userId => _currentUser?.uid;
 
-  // Stream of auth state changes
+  // Stream of auth state changes with error handling
   Stream<AuthUser?> get authStateChanges {
-    return _auth.authStateChanges().map((user) {
-      if (user != null) {
-        _currentUser = AuthUser.fromFirebaseUser(user);
-        return _currentUser;
-      }
-      _currentUser = null;
-      return null;
-    });
+    try {
+      return _auth.authStateChanges().map((user) {
+        if (user != null) {
+          _currentUser = AuthUser.fromFirebaseUser(user);
+          return _currentUser;
+        }
+        _currentUser = null;
+        return null;
+      }).handleError((error) {
+        print('Auth state changes error: $error');
+        return null;
+      });
+    } catch (e) {
+      print('Failed to initialize auth state changes: $e');
+      return Stream.value(null);
+    }
   }
 
-  // Initialize and check current user
+  // Initialize and check current user with error handling
   Future<void> initialize() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      _currentUser = AuthUser.fromFirebaseUser(user);
-      await _updateUserLastLogin(user.uid);
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        _currentUser = AuthUser.fromFirebaseUser(user);
+        await _updateUserLastLogin(user.uid);
+      }
+    } catch (e) {
+      print('Auth initialization error: $e');
+      _currentUser = null;
     }
     notifyListeners();
   }
