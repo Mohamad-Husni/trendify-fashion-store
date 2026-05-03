@@ -15,6 +15,20 @@
     the `--base-href` argument provided to `flutter build`.
   -->
   <base href="/trendify-fashion-store/">
+  
+  <!-- Error handling script to catch JavaScript errors -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error('JavaScript Error:', message, 'at', source, 'line', lineno);
+      document.body.innerHTML = '<div style="padding: 20px; font-family: Arial;">' +
+        '<h2>Loading Error</h2>' +
+        '<p>Error: ' + message + '</p>' +
+        '<p>Please try refreshing the page or clearing your browser cache.</p>' +
+        '<button onclick="location.reload()">Refresh Page</button>' +
+        '</div>';
+      return true;
+    };
+  </script>
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
